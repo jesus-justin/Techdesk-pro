@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TechDesk Pro",
+  "version": "1.0.0",
+  "identifier": "com.techdesk.pro",
+  "build": {
+    "beforeDevCommand": "pnpm --filter @techdesk-pro/desktop dev",
+    "beforeBuildCommand": "pnpm --filter @techdesk-pro/desktop build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "TechDesk Pro",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1024,
+        "minHeight": 600,
+        "center": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "dmg", "deb"]
+  }
+}

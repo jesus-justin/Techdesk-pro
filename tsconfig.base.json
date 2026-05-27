@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "ignoreDeprecations": "5.0",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@techdesk-pro/types": ["packages/types/src/index.ts"],
+      "@techdesk-pro/constants": ["packages/constants/src/index.ts"],
+      "@techdesk-pro/validators": ["packages/validators/src/index.ts"],
+      "@techdesk-pro/sync": ["packages/sync/src/queue.ts"],
+      "@techdesk-pro/ui": ["packages/ui/src/index.ts"]
+    }
+  }
+}

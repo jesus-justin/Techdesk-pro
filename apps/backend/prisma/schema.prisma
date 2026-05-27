@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  IT_STAFF
+  EMPLOYEE
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AssetStatus {
+  AVAILABLE
+  IN_USE
+  UNDER_REPAIR
+  RETIRED
+}
+
+enum SyncOperation {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  ASSIGN
+  RESOLVE
+  CLOSE
+}
+
+enum SyncQueueStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+model User {
+  id               String             @id @default(cuid())
+  email            String             @unique
+  passwordHash     String
+  name             String
+  role             Role               @default(EMPLOYEE)
+  refreshToken     String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  tickets          Ticket[]           @relation("SubmittedTickets")
+  assignedTickets  Ticket[]           @relation("AssignedTickets")
+  assetAssignments AssetAssignment[]
+  auditLogs        AuditLog[]
+  comments         Comment[]
+}
+
+model Ticket {
+  id            String         @id @default(cuid())
+  title         String
+  description   String
+  status        TicketStatus   @default(OPEN)
+  priority      TicketPriority @default(MEDIUM)
+  submittedById String
+  assignedToId  String?
+  assetId       String?
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  submittedBy   User           @relation("SubmittedTickets", fields: [submittedById], references: [id])
+  assignedTo    User?          @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  asset         Asset?         @relation(fields: [assetId], references: [id])
+  comments      Comment[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([submittedById])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  ticketId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id])
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+}
+
+model Asset {
+  id            String            @id @default(cuid())
+  name          String
+  category      String
+  serialNumber  String            @unique
+  model         String
+  manufacturer  String
+  purchaseDate  DateTime?
+  status        AssetStatus       @default(AVAILABLE)
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  assignments   AssetAssignment[]
+  tickets       Ticket[]
+
+  @@index([status])
+}
+
+model AssetAssignment {
+  id          String   @id @default(cuid())
+  assetId     String
+  userId      String
+  assignedAt  DateTime @default(now())
+  returnedAt  DateTime?
+  notes       String?
+
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([assetId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id            String      @id @default(cuid())
+  action        AuditAction
+  entity        String
+  entityId      String
+  performedById String
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+
+  performedBy   User        @relation(fields: [performedById], references: [id])
+
+  @@index([action])
+  @@index([entity, entityId])
+}
+
+model SyncQueue {
+  id          String          @id @default(cuid())
+  operation   SyncOperation
+  entity      String
+  payload     Json
+  retryCount  Int             @default(0)
+  maxRetries  Int             @default(3)
+  status      SyncQueueStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+  processedAt DateTime?
+}

@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+.turbo
+.env*
+*.db
+out
+src-tauri/target
+.expo
+android
+ios

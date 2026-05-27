@@ -1,0 +1,29 @@
+import * as SecureStore from "expo-secure-store";
+
+const ACCESS_TOKEN_KEY = "techdesk.accessToken";
+const REFRESH_TOKEN_KEY = "techdesk.refreshToken";
+
+export async function getToken(): Promise<string | null> {
+  return SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+}
+
+export async function setToken(token: string): Promise<void> {
+  await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
+}
+
+export async function clearToken(): Promise<void> {
+  await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+}
+
+export async function getRefreshToken(): Promise<string | null> {
+  return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+}
+
+export async function setRefreshToken(token: string): Promise<void> {
+  await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
+}
+
+export async function clearAll(): Promise<void> {
+  await clearToken();
+  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+}
