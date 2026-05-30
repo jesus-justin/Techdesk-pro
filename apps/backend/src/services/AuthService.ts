@@ -2,8 +2,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import { Role } from "@techdesk-pro/constants";
-import { prisma } from "../lib/prisma.js";
-import { AuditService } from "./AuditService.js";
+import { prisma } from "../lib/prisma";
+import { AuditService } from "./AuditService";
 
 interface RegisterInput {
   email: string;

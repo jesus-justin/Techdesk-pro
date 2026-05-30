@@ -1,59 +1,87 @@
-import { VictoryPie } from "victory-native";
-import { ScrollView, SafeAreaView, Text, View, RefreshControl } from "react-native";
+import { RefreshControl, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { AuditAction } from "@techdesk-pro/constants";
+import { Card, EmptyState, SkeletonBlock, StatCard } from "../../components/ui";
 import { useDashboard } from "../../hooks/useDashboard";
+
+const statCards = [
+  { label: "Open", key: "openTickets", accent: "bg-brand-500" },
+  { label: "In Progress", key: "inProgressTickets", accent: "bg-amber-500" },
+  { label: "Resolved", key: "resolvedTickets", accent: "bg-emerald-500" },
+  { label: "Total", key: "totalTickets", accent: "bg-fuchsia-500" }
+] as const;
 
 export default function DashboardScreen() {
   const { data, isLoading, refetch, isRefetching } = useDashboard();
 
-  if (isLoading || !data) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-gray-50">
-        <Text className="text-gray-500">Loading dashboard...</Text>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-slate-950">
       <ScrollView
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor="#22d3ee" />}
+        contentContainerClassName="px-4 pb-10 pt-4"
       >
-        <View className="px-4 pt-4">
-          <Text className="mb-3 text-xl font-semibold text-gray-900">Dashboard</Text>
-          <View className="mb-4 flex-row flex-wrap gap-2">
-            {[data.openTickets, data.inProgressTickets, data.resolvedTickets, data.totalTickets].map((value, idx) => (
-              <View key={idx} className="w-[48%] rounded-xl bg-white p-4 shadow-sm">
-                <Text className="text-xs text-gray-500">{["Open", "In Progress", "Resolved", "Total"][idx]}</Text>
-                <Text className="mt-1 text-2xl font-bold text-gray-900">{value}</Text>
-              </View>
+        <Text className="text-3xl font-black text-white">Dashboard</Text>
+        <Text className="mt-2 text-sm text-slate-400">Track tickets, assets, and the latest operational activity.</Text>
+
+        {isLoading || !data ? (
+          <View className="mt-6 flex-row flex-wrap justify-between gap-3">
+            {[1, 2, 3, 4].map((item) => (
+              <Card key={item} className="w-[48%] p-4">
+                <SkeletonBlock className="h-4 w-20" />
+                <SkeletonBlock className="mt-4 h-8 w-16" />
+              </Card>
             ))}
+            <Card className="mt-3 w-full p-4">
+              <SkeletonBlock className="h-5 w-40" />
+              {[1, 2, 3].map((item) => (
+                <SkeletonBlock key={item} className="mt-3 h-16 w-full" />
+              ))}
+            </Card>
           </View>
-          <View className="rounded-xl bg-white p-4 shadow-sm">
-            <Text className="mb-2 text-base font-semibold text-gray-900">Ticket Status</Text>
-            <VictoryPie
-              data={[
-                { x: "Open", y: data.openTickets },
-                { x: "In Progress", y: data.inProgressTickets },
-                { x: "Resolved", y: data.resolvedTickets }
-              ]}
-              colorScale={["#3B82F6", "#F59E0B", "#10B981"]}
-              height={220}
-            />
-          </View>
-          <View className="mt-4 rounded-xl bg-white p-4 shadow-sm">
-            <Text className="mb-3 text-base font-semibold text-gray-900">Recent Activity</Text>
-            {data.recentActivity.length === 0 ? (
-              <Text className="text-sm text-gray-500">No recent activity.</Text>
-            ) : (
-              data.recentActivity.map((entry) => (
-                <View key={entry.id} className="mb-2 rounded-lg bg-gray-50 p-3">
-                  <Text className="font-medium text-gray-800">{entry.action}</Text>
-                  <Text className="text-xs text-gray-500">{entry.entity} • {new Date(entry.createdAt).toLocaleString()}</Text>
+        ) : (
+          <>
+            <View className="mt-6 flex-row flex-wrap justify-between gap-3">
+              {statCards.map((card) => (
+                <View key={card.label} className="w-[48%]">
+                  <StatCard label={card.label} value={String(data[card.key])} accentClassName={card.accent} />
                 </View>
-              ))
-            )}
-          </View>
-        </View>
+              ))}
+            </View>
+
+            <Card className="mt-5 p-4">
+              <View>
+                <Text className="text-lg font-bold text-white">Recent activity</Text>
+                <Text className="text-sm text-slate-400">Latest audit log entries from the backend.</Text>
+              </View>
+
+              {data.recentActivity.length === 0 ? (
+                <EmptyState
+                  className="mt-4"
+                  title="Nothing yet"
+                  description="New updates will appear here when tickets or assets change."
+                />
+              ) : (
+                <View className="mt-4 gap-3">
+                  {data.recentActivity.map((entry) => (
+                    <View key={entry.id} className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                      <View className="flex-row items-center justify-between">
+                        <Text className="text-base font-semibold text-white">
+                          {entry.action === AuditAction.LOGIN ? "Login" : entry.action}
+                        </Text>
+                        <Text className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-200">
+                          {entry.entity}
+                        </Text>
+                      </View>
+                      <Text className="mt-2 text-sm text-slate-300">
+                        {entry.performedBy?.name ?? "System"} updated {entry.entity.toLowerCase()} {entry.entityId}
+                      </Text>
+                      <Text className="mt-2 text-xs text-slate-500">{new Date(entry.createdAt).toLocaleString()}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </Card>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

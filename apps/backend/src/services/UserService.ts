@@ -1,6 +1,6 @@
 import { type Role } from "@techdesk-pro/constants";
-import { prisma } from "../lib/prisma.js";
-import { AuditService } from "./AuditService.js";
+import { prisma } from "../lib/prisma";
+import { AuditService } from "./AuditService";
 
 export class UserService {
   static async list() {

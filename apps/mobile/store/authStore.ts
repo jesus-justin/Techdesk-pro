@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import api from "../lib/api";
-import { clearAll, setRefreshToken, setToken } from "../lib/storage";
+import { clearAll, setAccessToken, setRefreshToken } from "../lib/storage";
 import type { User } from "@techdesk-pro/types";
+
+type SafeUser = Omit<User, "passwordHash" | "refreshToken">;
 
 interface LoginCredentials {
   email: string;
@@ -9,12 +11,12 @@ interface LoginCredentials {
 }
 
 interface AuthState {
-  user: User | null;
+  user: SafeUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
-  setUser: (user: User | null) => void;
+  setUser: (user: SafeUser | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -26,10 +28,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     const data = response.data.data as {
       accessToken: string;
       refreshToken: string;
-      user: User;
+      user: SafeUser;
     };
 
-    await setToken(data.accessToken);
+    await setAccessToken(data.accessToken);
     await setRefreshToken(data.refreshToken);
 
     set({

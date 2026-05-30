@@ -1,6 +1,6 @@
 import { AssetStatus } from "@techdesk-pro/constants";
-import { prisma } from "../lib/prisma.js";
-import { AuditService } from "./AuditService.js";
+import { prisma } from "../lib/prisma";
+import { AuditService } from "./AuditService";
 
 export class AssetService {
   static async list(page = 1, limit = 20, status?: AssetStatus, q?: string) {

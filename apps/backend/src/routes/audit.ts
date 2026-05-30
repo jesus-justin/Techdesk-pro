@@ -1,9 +1,9 @@
 import { type AuditAction } from "@prisma/client";
 import { Router } from "express";
 import { Role } from "@techdesk-pro/constants";
-import { verifyToken } from "../middleware/auth.js";
-import { requireRole } from "../middleware/rbac.js";
-import { AuditService } from "../services/AuditService.js";
+import { verifyToken } from "../middleware/auth";
+import { requireRole } from "../middleware/rbac";
+import { AuditService } from "../services/AuditService";
 
 const router = Router();
 router.use(verifyToken, requireRole(Role.ADMIN));

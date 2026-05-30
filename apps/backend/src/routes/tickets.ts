@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { Role } from "@techdesk-pro/constants";
 import { TicketSchemas } from "@techdesk-pro/validators";
-import { verifyToken } from "../middleware/auth.js";
-import { requireRole } from "../middleware/rbac.js";
-import { TicketService } from "../services/TicketService.js";
+import { verifyToken } from "../middleware/auth";
+import { requireRole } from "../middleware/rbac";
+import { TicketService } from "../services/TicketService";
 
 const router = Router();
 router.use(verifyToken);

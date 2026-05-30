@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { TicketStatus, AssetStatus } from "@techdesk-pro/constants";
-import { verifyToken } from "../middleware/auth.js";
-import { prisma } from "../lib/prisma.js";
+import { verifyToken } from "../middleware/auth";
+import { prisma } from "../lib/prisma";
 
 const router = Router();
 router.use(verifyToken);

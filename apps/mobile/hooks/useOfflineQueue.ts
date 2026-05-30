@@ -1,61 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNetInfo } from "@react-native-community/netinfo";
-import { OfflineQueue, type SyncAdapter } from "@techdesk-pro/sync";
-import type { OfflineQueueItem } from "@techdesk-pro/types";
-
-type ItemStatus = "PENDING" | "DONE" | "FAILED";
-
-const memory = new Map<string, OfflineQueueItem & { status: ItemStatus }>();
-
-const adapter: SyncAdapter = {
-  async enqueue(item) {
-    memory.set(item.id, { ...item, status: "PENDING" });
-  },
-  async getPending() {
-    return [...memory.values()].filter((item) => item.status === "PENDING");
-  },
-  async markDone(id) {
-    const item = memory.get(id);
-    if (item) {
-      memory.set(id, { ...item, status: "DONE" });
-    }
-  },
-  async markFailed(id, retryCount) {
-    const item = memory.get(id);
-    if (item) {
-      memory.set(id, { ...item, retryCount, status: retryCount >= 3 ? "FAILED" : "PENDING" });
-    }
-  },
-  async getAll() {
-    return [...memory.values()];
-  },
-  async clear() {
-    memory.clear();
-  }
-};
+import { useState, useEffect, useRef } from 'react';
+import { useNetInfo } from '@react-native-community/netinfo';
 
 export function useOfflineQueue() {
   const netInfo = useNetInfo();
   const [pendingCount, setPendingCount] = useState(0);
-  const queue = useMemo(() => new OfflineQueue(adapter), []);
+  const queueRef = useRef<any[]>([]);
 
   useEffect(() => {
-    const sync = async () => {
-      if (!netInfo.isConnected) {
-        const pending = await queue.getPendingCount();
-        setPendingCount(pending);
-        return;
-      }
+    if (netInfo.isConnected && queueRef.current.length > 0) {
+      queueRef.current = [];
+      setPendingCount(0);
+    }
+  }, [netInfo.isConnected]);
 
-      await queue.processPending(async () => {
-        return;
-      });
-      const pending = await queue.getPendingCount();
-      setPendingCount(pending);
-    };
+  const enqueue = (item: any) => {
+    queueRef.current.push(item);
+    setPendingCount(queueRef.current.length);
+  };
 
-    void sync();
-  }, [netInfo.isConnected, queue]);
-
-  return { queue, pendingCount };
+  return { enqueue, pendingCount };
 }

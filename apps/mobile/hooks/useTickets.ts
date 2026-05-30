@@ -1,9 +1,24 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/api";
-import type { Ticket } from "@techdesk-pro/types";
+import type { Asset, Comment, Ticket, User } from "@techdesk-pro/types";
+import type { CreateTicketInput } from "@techdesk-pro/validators";
+
+type TicketListItem = Ticket & {
+  submittedBy: User;
+  assignedTo: User | null;
+  comments: Comment[];
+  asset: Asset | null;
+};
+
+type TicketDetailItem = Ticket & {
+  submittedBy: User;
+  assignedTo: User | null;
+  comments: Array<Comment & { author: User }>;
+  asset: Asset | null;
+};
 
 interface TicketsPage {
-  data: Ticket[];
+  data: TicketListItem[];
   meta: {
     page: number;
     totalPages: number;
@@ -11,12 +26,12 @@ interface TicketsPage {
   };
 }
 
-export function useTickets(status?: string) {
+export function useTickets(filters?: { status?: string; q?: string }) {
   return useInfiniteQuery({
-    queryKey: ["tickets", status],
+    queryKey: ["tickets", filters?.status ?? null, filters?.q ?? null],
     queryFn: async ({ pageParam = 1 }) => {
       const response = await api.get("/tickets", {
-        params: { page: pageParam, status }
+        params: { page: pageParam, status: filters?.status, q: filters?.q }
       });
       return response.data as TicketsPage;
     },
@@ -25,30 +40,48 @@ export function useTickets(status?: string) {
   });
 }
 
-export function useTicketMutations() {
+export function useTicket(id: string) {
+  return useQuery({
+    queryKey: ["ticket", id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const response = await api.get(`/tickets/${id}`);
+      return response.data.data as TicketDetailItem;
+    }
+  });
+}
+
+export function useCreateTicket() {
   const queryClient = useQueryClient();
 
-  const createTicket = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => {
+  return useMutation({
+    mutationFn: async (payload: CreateTicketInput) => {
       const response = await api.post("/tickets", payload);
-      return response.data.data as Ticket;
+      return response.data.data as TicketListItem;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["tickets"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+      ]);
     }
   });
+}
 
-  const updateTicket = useMutation({
-    mutationFn: async ({ id, payload }: { id: string; payload: Record<string, unknown> }) => {
-      const response = await api.patch(`/tickets/${id}`, payload);
-      return response.data.data as Ticket;
+export function useAddTicketComment(ticketId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: { content: string }) => {
+      const response = await api.post(`/tickets/${ticketId}/comments`, payload);
+      return response.data.data as Comment;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["ticket", ticketId] }),
+        queryClient.invalidateQueries({ queryKey: ["tickets"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+      ]);
     }
   });
-
-  return { createTicket, updateTicket };
 }

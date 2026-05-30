@@ -1,9 +1,17 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import api from "../lib/api";
-import type { Asset } from "@techdesk-pro/types";
+import type { Asset, AssetAssignment, User } from "@techdesk-pro/types";
+
+type AssetListItem = Asset & {
+  assignments: Array<AssetAssignment & { user: User }>;
+};
+
+type AssetDetailItem = Asset & {
+  assignments: Array<AssetAssignment & { user: User }>;
+};
 
 interface AssetsPage {
-  data: Asset[];
+  data: AssetListItem[];
   meta: {
     page: number;
     totalPages: number;
@@ -11,12 +19,12 @@ interface AssetsPage {
   };
 }
 
-export function useAssets(status?: string, q?: string) {
+export function useAssets(filters?: { status?: string; q?: string }) {
   return useInfiniteQuery({
-    queryKey: ["assets", status, q],
+    queryKey: ["assets", filters?.status ?? null, filters?.q ?? null],
     queryFn: async ({ pageParam = 1 }) => {
       const response = await api.get("/assets", {
-        params: { page: pageParam, status, q }
+        params: { page: pageParam, status: filters?.status, q: filters?.q }
       });
       return response.data as AssetsPage;
     },
@@ -25,30 +33,13 @@ export function useAssets(status?: string, q?: string) {
   });
 }
 
-export function useAssetMutations() {
-  const queryClient = useQueryClient();
-
-  const createAsset = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => {
-      const response = await api.post("/assets", payload);
-      return response.data.data as Asset;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["assets"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+export function useAsset(id: string) {
+  return useQuery({
+    queryKey: ["asset", id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const response = await api.get(`/assets/${id}`);
+      return response.data.data as AssetDetailItem;
     }
   });
-
-  const updateAsset = useMutation({
-    mutationFn: async ({ id, payload }: { id: string; payload: Record<string, unknown> }) => {
-      const response = await api.patch(`/assets/${id}`, payload);
-      return response.data.data as Asset;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["assets"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    }
-  });
-
-  return { createAsset, updateAsset };
 }

@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
-import { SafeAreaView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, Text, View } from "react-native";
+import { Card, PrimaryButton } from "../../components/ui";
 import { useAuthStore } from "../../store/authStore";
 
 export default function ProfileScreen() {
@@ -15,32 +16,27 @@ export default function ProfileScreen() {
     .toUpperCase() ?? "U";
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 px-4 pt-6">
-      <View className="rounded-xl bg-white p-4 shadow-sm">
-        <View className="h-14 w-14 items-center justify-center rounded-full bg-primary">
-          <Text className="text-xl font-bold text-white">{initials}</Text>
+    <SafeAreaView className="flex-1 bg-slate-950 px-4 pt-4">
+      <Text className="text-3xl font-black text-white">Profile</Text>
+      <Text className="mt-2 text-sm text-slate-400">Review the signed-in account and sign out when you're done.</Text>
+
+      <Card className="mt-6 items-center p-6">
+        <View className="h-20 w-20 items-center justify-center rounded-full bg-brand-500/20">
+          <Text className="text-2xl font-black text-brand-300">{initials}</Text>
         </View>
-        <Text className="mt-3 text-lg font-semibold text-gray-900">{user?.name ?? "Unknown User"}</Text>
-        <Text className="text-sm text-gray-500">{user?.email ?? "-"}</Text>
-        <Text className="mt-2 self-start rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">{user?.role}</Text>
-      </View>
+        <Text className="mt-4 text-xl font-bold text-white">{user?.name ?? "Unknown user"}</Text>
+        <Text className="mt-1 text-sm text-slate-400">{user?.email ?? "No account loaded"}</Text>
+        <Text className="mt-3 rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-200">{user?.role ?? "-"}</Text>
+      </Card>
 
-      <View className="mt-4 rounded-xl bg-white p-4 shadow-sm">
-        <Text className="mb-2 text-sm font-semibold text-gray-900">Settings</Text>
-        <TouchableOpacity className="rounded-lg bg-gray-100 px-3 py-2" onPress={() => router.push("/(tabs)/profile") }>
-          <Text className="text-sm text-gray-700">Change Password</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity
-        className="mt-4 rounded-xl bg-danger py-3"
+      <PrimaryButton
+        className="mt-6"
+        title="Logout"
         onPress={async () => {
           await logout();
           router.replace("/(auth)/login");
         }}
-      >
-        <Text className="text-center font-semibold text-white">Logout</Text>
-      </TouchableOpacity>
+      />
     </SafeAreaView>
   );
 }

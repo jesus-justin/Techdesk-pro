@@ -1,5 +1,5 @@
 import { type AuditAction, Prisma } from "@prisma/client";
-import { prisma } from "../lib/prisma.js";
+import { prisma } from "../lib/prisma";
 
 export class AuditService {
   static async log(

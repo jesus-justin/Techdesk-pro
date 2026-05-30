@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AuthSchemas } from "@techdesk-pro/validators";
-import { AuthService } from "../services/AuthService.js";
-import { verifyToken } from "../middleware/auth.js";
+import { AuthService } from "../services/AuthService";
+import { verifyToken } from "../middleware/auth";
 
 const router = Router();
 

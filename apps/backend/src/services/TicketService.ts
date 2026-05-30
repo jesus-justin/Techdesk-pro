@@ -1,8 +1,8 @@
 import { TicketStatus, TICKET_STATUS_FLOW } from "@techdesk-pro/constants";
 import type { Role } from "@techdesk-pro/constants";
 import type { TicketFilterInput, UpdateTicketInput } from "@techdesk-pro/validators";
-import { prisma } from "../lib/prisma.js";
-import { AuditService } from "./AuditService.js";
+import { prisma } from "../lib/prisma";
+import { AuditService } from "./AuditService";
 
 export class TicketService {
   static async list(filters: TicketFilterInput, userId: string, role: Role) {

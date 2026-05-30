@@ -1,19 +1,22 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
-import { KeyboardAvoidingView, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
 import { createTicketSchema, type CreateTicketInput } from "@techdesk-pro/validators";
-import { TicketPriority } from "@techdesk-pro/constants";
-import { useTicketMutations } from "../../../hooks/useTickets";
+import { PRIORITY_LABELS, TicketPriority } from "@techdesk-pro/constants";
+import { Card, FieldError, FieldLabel, FormInput, PrimaryButton } from "../../../components/ui";
+import { useCreateTicket } from "../../../hooks/useTickets";
 
 export default function NewTicketScreen() {
   const router = useRouter();
-  const { createTicket } = useTicketMutations();
+  const createTicket = useCreateTicket();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     control,
     handleSubmit,
-    formState: { errors }
+    formState: { errors, isSubmitting }
   } = useForm<CreateTicketInput>({
     resolver: zodResolver(createTicketSchema),
     defaultValues: {
@@ -24,67 +27,92 @@ export default function NewTicketScreen() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    await createTicket.mutateAsync(values);
-    router.back();
+    try {
+      setSubmitError(null);
+      await createTicket.mutateAsync(values);
+      router.replace("/(tabs)/tickets");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Unable to create ticket");
+    }
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1 px-4 pt-4"
-      >
-        <View className="rounded-xl bg-white p-4 shadow-sm">
-          <Text className="text-xl font-semibold text-gray-900">Create Ticket</Text>
+    <SafeAreaView className="flex-1 bg-slate-950">
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
+        <ScrollView contentContainerClassName="px-4 pb-10 pt-4">
+          <Text className="text-3xl font-black text-white">New ticket</Text>
+          <Text className="mt-2 text-sm text-slate-400">Capture the issue, set urgency, and submit it to the team.</Text>
 
-          <Text className="mt-4 mb-1 text-sm font-medium text-gray-700">Title</Text>
-          <Controller
-            control={control}
-            name="title"
-            render={({ field: { onChange, value } }) => (
-              <TextInput className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2" value={value} onChangeText={onChange} />
-            )}
-          />
-          {errors.title ? <Text className="mt-1 text-xs text-danger">{errors.title.message}</Text> : null}
+          <Card className="mt-6 p-5">
+            <FieldLabel>Title</FieldLabel>
+            <Controller
+              control={control}
+              name="title"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  placeholder="Password reset failing for finance"
+                  value={value}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  error={errors.title?.message}
+                />
+              )}
+            />
 
-          <Text className="mt-4 mb-1 text-sm font-medium text-gray-700">Description</Text>
-          <Controller
-            control={control}
-            name="description"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                multiline
-                className="min-h-[100px] rounded-xl border border-gray-200 bg-gray-50 px-3 py-2"
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-          {errors.description ? <Text className="mt-1 text-xs text-danger">{errors.description.message}</Text> : null}
+            <FieldLabel className="mt-4">Description</FieldLabel>
+            <Controller
+              control={control}
+              name="description"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  multiline
+                  numberOfLines={6}
+                  textAlignVertical="top"
+                  className="min-h-[140px]"
+                  placeholder="Include what happened, who is affected, and any steps already tried."
+                  value={value}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  error={errors.description?.message}
+                />
+              )}
+            />
 
-          <Text className="mt-4 mb-1 text-sm font-medium text-gray-700">Priority</Text>
-          <Controller
-            control={control}
-            name="priority"
-            render={({ field: { onChange, value } }) => (
-              <View className="flex-row gap-2">
-                {[TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH, TicketPriority.CRITICAL].map((priority) => (
-                  <TouchableOpacity
-                    key={priority}
-                    className={`rounded-full px-3 py-2 ${value === priority ? "bg-primary" : "bg-gray-100"}`}
-                    onPress={() => onChange(priority)}
-                  >
-                    <Text className={`${value === priority ? "text-white" : "text-gray-700"} text-xs`}>{priority}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          />
+            <FieldLabel className="mt-4">Priority</FieldLabel>
+            <Controller
+              control={control}
+              name="priority"
+              render={({ field: { onChange, value } }) => (
+                <View className="flex-row flex-wrap gap-2">
+                  {[TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH, TicketPriority.CRITICAL].map((priority) => {
+                    const active = value === priority;
+                    return (
+                      <TouchableOpacity
+                        key={priority}
+                        className={`rounded-full border px-3 py-2 ${active ? "border-brand-400 bg-brand-500/20" : "border-slate-700 bg-slate-900"}`}
+                        onPress={() => onChange(priority)}
+                      >
+                        <Text className={`text-xs font-semibold ${active ? "text-brand-200" : "text-slate-300"}`}>
+                          {PRIORITY_LABELS[priority]}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            />
+            {errors.priority ? <FieldError message={errors.priority.message} /> : null}
 
-          <TouchableOpacity className="mt-6 rounded-xl bg-primary py-3" onPress={() => void onSubmit()}>
-            <Text className="text-center font-semibold text-white">Submit</Text>
-          </TouchableOpacity>
-        </View>
+            {submitError ? <FieldError message={submitError} /> : null}
+
+            <PrimaryButton
+              className="mt-6"
+              title={isSubmitting ? "Submitting..." : "Create ticket"}
+              onPress={() => void onSubmit()}
+              loading={isSubmitting || createTicket.isPending}
+            />
+          </Card>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
