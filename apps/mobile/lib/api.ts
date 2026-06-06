@@ -1,8 +1,23 @@
 import axios from "axios";
+import Constants from "expo-constants";
 import { clearAll, getAccessToken, getRefreshToken, setAccessToken, setRefreshToken } from "./storage";
 
+function getApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+
+  const host =
+    Constants.expoConfig?.hostUri?.split(":").shift() ??
+    Constants.expoGoConfig?.debuggerHost?.split(":").shift();
+
+  return `http://${host ?? "localhost"}:3000/api/v1`;
+}
+
+const apiBaseUrl = getApiBaseUrl();
+
 const api = axios.create({
-  baseURL: "http://localhost:3000/api/v1"
+  baseURL: apiBaseUrl
 });
 
 api.interceptors.request.use(async (config) => {
@@ -23,7 +38,7 @@ async function refreshAccessToken(): Promise<string | null> {
     return null;
   }
 
-  const refreshClient = axios.create({ baseURL: "http://localhost:3000/api/v1" });
+  const refreshClient = axios.create({ baseURL: apiBaseUrl });
   const response = await refreshClient.post("/auth/refresh-token", { refreshToken });
   const nextToken = response.data?.data?.accessToken as string | undefined;
   const nextRefreshToken = response.data?.data?.refreshToken as string | undefined;
