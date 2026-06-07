@@ -12,9 +12,15 @@ importers:
         specifier: ^6.1.2
         version: 6.1.2(expo@54.0.35)(react-dom@18.3.1(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.7)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
     devDependencies:
+      '@prisma/client':
+        specifier: 5.22.0
+        version: 5.22.0(prisma@5.22.0)
       prettier:
         specifier: ^3.2.0
         version: 3.8.3
+      prisma:
+        specifier: 5.22.0
+        version: 5.22.0
       turbo:
         specifier: ^2.0.0
         version: 2.9.15
@@ -25,7 +31,7 @@ importers:
   apps/backend:
     dependencies:
       '@prisma/client':
-        specifier: ^5.21.1
+        specifier: ^5.22.0
         version: 5.22.0(prisma@5.22.0)
       '@techdesk-pro/constants':
         specifier: workspace:*

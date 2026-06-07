@@ -56,8 +56,17 @@ async function refreshAccessToken(): Promise<string | null> {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config as { _retry?: boolean; url?: string; headers: Record<string, string> };
-    const isAuthRoute = originalRequest.url?.includes("/auth/login") || originalRequest.url?.includes("/auth/refresh-token");
+    const originalRequest = error.config as
+      | { _retry?: boolean; url?: string; headers: Record<string, string> }
+      | undefined;
+
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const isAuthRoute =
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/refresh-token");
 
     if (error.response?.status !== 401 || originalRequest._retry || isAuthRoute) {
       return Promise.reject(error);

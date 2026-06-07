@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import { useRouter } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, Text, View } from "react-native";
@@ -31,8 +32,15 @@ export default function LoginScreen() {
       await login(values);
       router.replace("/(tabs)/dashboard");
     } catch (error) {
+      if (axios.isAxiosError(error) && !error.response) {
+        setSubmitError(
+          "Cannot reach the server. Make sure the backend is running on your PC (port 3000) and your phone is on the same Wi-Fi."
+        );
+        return;
+      }
+
       setError("password", { type: "manual", message: "Invalid email or password" });
-      setSubmitError(error instanceof Error ? error.message : "Unable to sign in");
+      setSubmitError("Invalid email or password. Check your credentials and try again.");
     }
   });
 
